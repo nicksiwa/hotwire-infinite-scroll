@@ -8,17 +8,29 @@ export default class extends Controller {
     hasNextPage: Boolean,
   };
 
+  static targets = ["lastPage"];
+
   initialize() {
-    this.scroll = this.scroll.bind(this);
     this.pageValue = this.pageValue || 1;
   }
 
   connect() {
-    document.addEventListener("scroll", this.scroll);
+    const options = {
+      root: null,
+      rootMargin: "200px 0px",
+      threshold: 0,
+    };
+
+    const observer = new IntersectionObserver(
+      this.observeCallback.bind(this),
+      options
+    );
+
+    observer.observe(document.querySelector("#bottomPage"));
   }
 
-  scroll() {
-    if (this.scrollReachedEnd) {
+  observeCallback([entry], observer) {
+    if (entry.isIntersecting && !this.hasLastPageTarget) {
       this._fetchNewPage();
     }
   }
@@ -32,12 +44,5 @@ export default class extends Controller {
     });
 
     this.pageValue += 1;
-  }
-
-  get scrollReachedEnd() {
-    const { scrollHeight, scrollTop, clientHeight } = document.documentElement;
-    const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
-    console.log(distanceFromBottom)
-    return distanceFromBottom < 1;
   }
 }
